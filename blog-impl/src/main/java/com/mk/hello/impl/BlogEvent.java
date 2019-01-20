@@ -25,7 +25,7 @@ public interface BlogEvent extends Jsonable, AggregateEvent<BlogEvent> {
 
   @Override
   default AggregateEventTagger<BlogEvent> aggregateTag() {
-    return BlogEventTag.INSTANCE;
+    return BlogEventTag.TAG;
   }
 
   @Immutable

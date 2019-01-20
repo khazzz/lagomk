@@ -41,7 +41,7 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
 
     @Override
     public PSequence<AggregateEventTag<BlogEvent>> aggregateTags() {
-        return TreePVector.singleton(BlogEventTag.INSTANCE);
+        return BlogEventTag.TAG.allTags();
     }
 
     @Override
