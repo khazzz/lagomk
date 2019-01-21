@@ -48,6 +48,14 @@ public interface BlogService extends Service {
   ServiceCall<PostContent, Done> updatePost(String id);
 
   /**
+   * Delete a blog post for the given ID. Example:
+   * curl -X DELETE http://localhost:9000/api/blog/12345678-1234-1234-1234-1234567890ab
+   *
+   * @param id id of blog post to deletePost
+   */
+  ServiceCall<NotUsed, Done> deletePost(String id);
+
+  /**
    * Gets all blog posts. Example:
    * curl http://localhost:9000/api/blog/
    *
@@ -76,6 +84,7 @@ public interface BlogService extends Service {
             restCall(Method.GET, "/api/blog/:id", this::getPost),
             restCall(Method.POST, "/api/blog/", this::addPost),
             restCall(Method.PUT, "/api/blog/:id", this::updatePost),
+            restCall(Method.DELETE, "/api/blog/:id", this::deletePost),
             restCall(Method.GET, "/api/blog/", this::getAllPosts),
             namedCall("/api/blog/live/", this::getLivePosts),
             restCall(Method.GET, "/api/blog/author/:id", this::getPostsByAuthor)

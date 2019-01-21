@@ -55,4 +55,11 @@ public interface BlogCommand extends Jsonable {
     @NonNull
     PostContent content;
   }
+
+  /**
+   * @see BlogService#deletePost(String)
+   */
+  enum DeletePost implements BlogCommand, PersistentEntity.ReplyType<Done> {
+    INSTANCE
+  }
 }

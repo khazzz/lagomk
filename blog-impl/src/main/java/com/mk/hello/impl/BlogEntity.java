@@ -20,6 +20,7 @@ public class BlogEntity extends PersistentEntity<BlogCommand, BlogEvent, BlogSta
     addBehaviorForGetPost(b);
     addBehaviorForAddPost(b);
     addBehaviorForUpdatePost(b);
+    addBehaviorForDeletePost(b);
     return b.build();
   }
 
@@ -46,5 +47,16 @@ public class BlogEntity extends PersistentEntity<BlogCommand, BlogEvent, BlogSta
             )
     );
     b.setEventHandler(BlogEvent.PostUpdated.class, evt -> new BlogState(Optional.of(evt.getContent())));
+  }
+
+  private void addBehaviorForDeletePost(final BehaviorBuilder b) {
+    b.setCommandHandler(BlogCommand.DeletePost.class,
+            (cmd, ctx) -> ctx.thenPersist(
+                    new BlogEvent.PostDeleted(entityId()),
+                    evt -> ctx.reply(Done.getInstance())
+            )
+    );
+    // reset the snapshot state to empty
+    b.setEventHandler(BlogEvent.PostDeleted.class, evt -> BlogState.EMPTY);
   }
 }

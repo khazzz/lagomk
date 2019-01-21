@@ -65,6 +65,12 @@ public class BlogServiceImpl implements BlogService {
   }
 
   @Override
+  public ServiceCall<NotUsed, Done> deletePost(final String id) {
+    return request -> registry.refFor(BlogEntity.class, id)
+            .ask(BlogCommand.DeletePost.INSTANCE);
+  }
+
+  @Override
   public ServiceCall<NotUsed, PSequence<PostSummary>> getAllPosts() {
     return req -> {
       CompletionStage<PSequence<PostSummary>> result = db.selectAll("SELECT * FROM postcontent")

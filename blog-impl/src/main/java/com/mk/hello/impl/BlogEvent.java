@@ -1,10 +1,12 @@
 package com.mk.hello.impl;
 
+import akka.Done;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.lightbend.lagom.javadsl.persistence.AggregateEvent;
 import com.lightbend.lagom.javadsl.persistence.AggregateEventTag;
 import com.lightbend.lagom.javadsl.persistence.AggregateEventTagger;
+import com.lightbend.lagom.javadsl.persistence.PersistentEntity;
 import com.lightbend.lagom.serialization.CompressedJsonable;
 import com.lightbend.lagom.serialization.Jsonable;
 import com.mk.hello.api.PostContent;
@@ -48,5 +50,14 @@ public interface BlogEvent extends Jsonable, AggregateEvent<BlogEvent> {
     String id;
     @NonNull
     PostContent content;
+  }
+
+  @Immutable
+  @JsonDeserialize
+  @Value
+  @AllArgsConstructor(onConstructor = @__(@JsonCreator))
+  final class PostDeleted implements BlogEvent, CompressedJsonable {
+    @NonNull
+    String id;
   }
 }
