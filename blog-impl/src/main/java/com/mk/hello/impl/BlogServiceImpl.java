@@ -86,6 +86,20 @@ public class BlogServiceImpl implements BlogService {
     };
   }
 
+  @Override
+  public ServiceCall<NotUsed, PSequence<PostSummary>> getPostsByAuthor(final String author) {
+    return req -> {
+      CompletionStage<PSequence<PostSummary>> result = db.selectAll("SELECT * FROM postcontent")
+              .thenApply(rows -> {
+                List<PostSummary> posts = rows.stream()
+                        .filter(row -> row.getString("author").equalsIgnoreCase(author))
+                        .map(this::mapPostSummary).collect(Collectors.toList());
+                return TreePVector.from(posts);
+              });
+      return result;
+    };
+  }
+
   private PostSummary mapPostSummary(Row row) {
     return new PostSummary(
             row.getString("id"),
