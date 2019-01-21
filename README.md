@@ -1,4 +1,4 @@
-agom framework for java experiments.
+Lagom framework for java experiments.
 
 I adopted a blog project from https://github.com/jvz/lagom-example
 and added missing functionality. Now it supports write-side CQRS with
