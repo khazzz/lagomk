@@ -16,6 +16,8 @@
         <module>stream-impl</module>
         <module>blog-api</module>
         <module>blog-impl</module>
+        <module>crud-api</module>
+        <module>crud-impl</module>
         <module>integration-tests</module>
     </modules>
 
