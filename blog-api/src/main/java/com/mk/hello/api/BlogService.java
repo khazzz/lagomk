@@ -65,13 +65,6 @@ public interface BlogService extends Service {
   ServiceCall<NotUsed, PSequence<PostSummary>> getAllPosts(Integer pageNo, Integer pageSize);
 
   /**
-   * Gets all blog posts. Example:
-   * curl http://localhost:9000/api/blog/live
-   *
-   */
-  ServiceCall<NotUsed, Source<PostSummary, ?>> getLivePosts();
-
-  /**
    * Gets all blog posts by author. Example:
    * curl http://localhost:9000/api/blog/author/:author/pageNo/:pageNo/pageSize/:pageSize
    *
@@ -81,6 +74,10 @@ public interface BlogService extends Service {
    */
   ServiceCall<NotUsed, PSequence<PostSummary>> getPostsByAuthor(String author, Integer pageNo, Integer pageSize);
 
+  ServiceCall<NotUsed, Source<PostSummary, ?>> getLivePosts();
+
+  ServiceCall<String, Source<PostSummary, ?>> getLivePostsByAuthor();
+
   @Override
   default Descriptor descriptor() {
     return named("blog").withCalls(
@@ -89,8 +86,9 @@ public interface BlogService extends Service {
             restCall(Method.PUT, "/api/blog/:id", this::updatePost),
             restCall(Method.DELETE, "/api/blog/:id", this::deletePost),
             restCall(Method.GET, "/api/blog/pageNo/:pageNo/pageSize/:pageSize", this::getAllPosts),
-            namedCall("/api/blog/live/", this::getLivePosts),
-            restCall(Method.GET, "/api/blog/author/:author/pageNo/:pageNo/pageSize/:pageSize", this::getPostsByAuthor)
+            restCall(Method.GET, "/api/blog/author/:author/pageNo/:pageNo/pageSize/:pageSize", this::getPostsByAuthor),
+            namedCall("livePosts", this::getLivePosts),
+            namedCall("livePostsByAuthor", this::getLivePostsByAuthor)
     ).withAutoAcl(true);
   }
 }

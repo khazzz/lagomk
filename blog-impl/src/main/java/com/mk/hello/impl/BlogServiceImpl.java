@@ -111,6 +111,18 @@ public class BlogServiceImpl implements BlogService {
     };
   }
 
+  @Override
+  public ServiceCall<String, Source<PostSummary, ?>> getLivePostsByAuthor() {
+
+    return author -> {
+
+      Source<PostSummary, ?> result = db.select("SELECT * FROM postcontent")
+              .filter(row -> row.getString("author").equalsIgnoreCase(author))
+              .map(this::mapPostSummary);
+      return CompletableFuture.completedFuture(result);
+    };
+  }
+
   private PostSummary mapPostSummary(Row row) {
     return new PostSummary(
             row.getString("id"),

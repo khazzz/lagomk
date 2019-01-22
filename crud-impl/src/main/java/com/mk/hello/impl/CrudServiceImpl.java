@@ -75,10 +75,30 @@ public class CrudServiceImpl implements CrudService {
   }
 
   @Override
-  public ServiceCall<NotUsed, PSequence<PostSummary>> getPostsByAuthor(final String author, Integer pageNo, Integer pageSize) {
+  public ServiceCall<NotUsed, Source<PostSummary, ?>> getLivePosts() {
+    return req -> {
+
+      CompletionStage<Source<PostSummary, ?>> result = repository.getAllPosts();
+
+      return result;
+    };
+  }
+
+  @Override
+  public ServiceCall<NotUsed, PSequence<PostSummary>> getPostsByAuthor(String author, Integer pageNo, Integer pageSize) {
     return req -> {
 
       CompletionStage<PSequence<PostSummary>> result = repository.getPostsByAuthor(author, pageNo, pageSize);
+
+      return result;
+    };
+  }
+
+  @Override
+  public ServiceCall<String, Source<PostSummary, ?>> getLivePostsByAuthor() {
+    return author -> {
+
+      CompletionStage<Source<PostSummary, ?>> result = repository.getPostsByAuthor(author);
 
       return result;
     };

@@ -7,6 +7,7 @@ import com.lightbend.lagom.javadsl.api.ServiceCall;
 import com.lightbend.lagom.javadsl.api.transport.Method;
 
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 
 import akka.Done;
 import akka.NotUsed;
@@ -66,20 +67,16 @@ public interface CrudService extends Service {
 
   /**
    * Gets all crud posts. Example:
-   * curl http://localhost:9000/api/crud/live
-   *
-   */
-  //ServiceCall<NotUsed, Source<PostSummary, ?>> getLivePosts();
-
-  /**
-   * Gets all crud posts by author. Example:
    * curl http://localhost:9000/api/crud/author/:author/pageNo/:pageNo/pageSize/:pageSize
    *
-   * @param author - search by author
    * @param pageNo - limit to this pageNo
    * @param pageSize - limit to this pageSize
    */
   ServiceCall<NotUsed, PSequence<PostSummary>> getPostsByAuthor(String author, Integer pageNo, Integer pageSize);
+
+  ServiceCall<NotUsed, Source<PostSummary, ?>> getLivePosts();
+
+  ServiceCall<String, Source<PostSummary, ?>> getLivePostsByAuthor();
 
   @Override
   default Descriptor descriptor() {
@@ -89,8 +86,9 @@ public interface CrudService extends Service {
             restCall(Method.PUT, "/api/crud/:id", this::updatePost),
             restCall(Method.DELETE, "/api/crud/:id", this::deletePost),
             restCall(Method.GET, "/api/crud/pageNo/:pageNo/pageSize/:pageSize", this::getAllPosts),
-            //namedCall("/api/crud/live/", this::getLivePosts),
-            restCall(Method.GET, "/api/crud/author/:author/pageNo/:pageNo/pageSize/:pageSize", this::getPostsByAuthor)
+            namedCall("livePosts", this::getLivePosts),
+            restCall(Method.GET, "/api/crud/author/:author/pageNo/:pageNo/pageSize/:pageSize", this::getPostsByAuthor),
+            namedCall("livePostsByAuthor", this::getLivePostsByAuthor)
     ).withAutoAcl(true);
   }
 }

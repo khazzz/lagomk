@@ -2,6 +2,7 @@ package com.mk.hello.impl;
 
 import akka.Done;
 import akka.NotUsed;
+import akka.stream.javadsl.Source;
 import com.datastax.driver.core.Row;
 import com.lightbend.lagom.javadsl.api.ServiceCall;
 import com.lightbend.lagom.javadsl.persistence.cassandra.CassandraSession;
@@ -76,6 +77,16 @@ public class CrudRepository {
     ).thenApply(maybeRow -> maybeRow.map(this::mapPostContent));
   }
 
+  /**
+   * Note: It is a bad idea to use select * without a limit cuz session.selectAll returns
+   * a List<Row> and you will run out of memory. Instead use session.select if you have no
+   * limit and return a Source<Row> and let the client control the back pressure. The client
+   * will use a web socket instead of a REST call.
+   *
+   * @param pageNo
+   * @param pageSize
+   * @return
+   */
   public CompletionStage<PSequence<PostSummary>> getAllPosts(Integer pageNo, Integer pageSize) {
 
        return session().thenCompose(session ->
@@ -87,6 +98,23 @@ public class CrudRepository {
                         .map(this::mapPostSummary).collect(Collectors.toList());
                 return TreePVector.from(posts);
               });
+  }
+
+  public CompletionStage<Source<PostSummary, ?>> getAllPosts() {
+
+    return session().thenCompose(session ->
+            CompletableFuture.completedFuture(
+                    session.select("SELECT * FROM post_content")
+                            .map(this::mapPostSummary)));
+  }
+
+  public CompletionStage<Source<PostSummary, ?>> getPostsByAuthor(String author) {
+
+    return session().thenCompose(session ->
+            CompletableFuture.completedFuture(
+                    session.select("SELECT * FROM post_content")
+                            .filter(row -> row.getString("author").equalsIgnoreCase(author))
+                            .map(this::mapPostSummary)));
   }
 
   public CompletionStage<PSequence<PostSummary>> getPostsByAuthor(String author, Integer pageNo, Integer pageSize) {
