@@ -25,6 +25,8 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
 
     private PreparedStatement writePreparedStatement = null; // initialized in prepare
     private PreparedStatement updatePreparedStatement = null; // initialized in prepare
+    private PreparedStatement deletePreparedStatement = null; // initialized in prepare
+
 
     @Inject
     public BlogEventProcessor(CassandraSession session, CassandraReadSide readSide) {
@@ -38,6 +40,9 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
     private void setUpdatePreparedStatement(PreparedStatement updatePreparedStatement) {
         this.updatePreparedStatement = updatePreparedStatement;
     }
+    private void setDeletePreparedStatement(PreparedStatement deletePreparedStatement) {
+        this.deletePreparedStatement = deletePreparedStatement;
+    }
 
     @Override
     public PSequence<AggregateEventTag<BlogEvent>> aggregateTags() {
@@ -50,8 +55,8 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
                 .setGlobalPrepare(this::prepareCreateTables)
                 .setPrepare((ignored) -> prepareWriteBlog())
                 .setEventHandler(BlogEvent.PostAdded.class, this::processPostAdded)
-//                .setPrepare((ignored) -> prepareUpdateBlog())
-//                .setEventHandler(BlogEvent.PostUpdated.class, this::processPostUpdated)
+                .setEventHandler(BlogEvent.PostUpdated.class, this::processPostUpdated)
+                .setEventHandler(BlogEvent.PostDeleted.class, this::processPostDeleted)
                 .build();
     }
 
@@ -65,24 +70,34 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
     }
 
     private CompletionStage<Done> prepareWriteBlog() {
+
+        // prepare insert statement
         return session.prepare("INSERT INTO postcontent (id, title, body, author) VALUES (?, ?, ?, ?)").thenApply(ps -> {
             setWritePreparedStatement(ps);
 
-           /* session.prepare("UPDATE postcontent set title = ?, body = ?, author = ? where id = ? IF EXISTS").thenApply(ps2 -> {
+            // prepare update statement
+            session.prepare("UPDATE postcontent set title = ?, body = ?, author = ? where id = ?").thenApply(ps2 -> {
                 setUpdatePreparedStatement(ps2);
+
+                // prepare delete statement
+                session.prepare("DELETE FROM post_content WHERE id = ?").thenApply(ps3 -> {
+                    setDeletePreparedStatement(ps3);
+                    return Done.getInstance();
+                });
+
                 return Done.getInstance();
-            });*/
+            });
 
             return Done.getInstance();
         });
     }
 
-    private CompletionStage<Done> prepareUpdateBlog() {
-        return session.prepare("UPDATE postcontent set title = ?, body = ?, author = ? where id = ? IF EXISTS").thenApply(ps -> {
+    /*private CompletionStage<Done> prepareUpdateBlog() {
+        return session.prepare("UPDATE postcontent set title = ?, body = ?, author = ? where id = ?").thenApply(ps -> {
             setUpdatePreparedStatement(ps);
             return Done.getInstance();
         });
-    }
+    }*/
 
     private CompletionStage<List<BoundStatement>> processPostAdded(BlogEvent.PostAdded event) {
         BoundStatement bindWritePreparedStatement = writePreparedStatement.bind();
@@ -100,6 +115,12 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
         bindUpdatePreparedStatement.setString("author", event.getContent().getAuthor());
         bindUpdatePreparedStatement.setString("id", event.getId());
         return completedStatement(bindUpdatePreparedStatement);
+    }
+
+    private CompletionStage<List<BoundStatement>> processPostDeleted(BlogEvent.PostDeleted event) {
+        BoundStatement bindDeletedPreparedStatement = deletePreparedStatement.bind();
+        bindDeletedPreparedStatement.setString("id", event.getId());
+        return completedStatement(bindDeletedPreparedStatement);
     }
 
 }
