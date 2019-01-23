@@ -67,6 +67,12 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
     private CompletionStage<Done> prepareWriteBlog() {
         return session.prepare("INSERT INTO postcontent (id, title, body, author) VALUES (?, ?, ?, ?)").thenApply(ps -> {
             setWritePreparedStatement(ps);
+
+           /* session.prepare("UPDATE postcontent set title = ?, body = ?, author = ? where id = ? IF EXISTS").thenApply(ps2 -> {
+                setUpdatePreparedStatement(ps2);
+                return Done.getInstance();
+            });*/
+
             return Done.getInstance();
         });
     }
