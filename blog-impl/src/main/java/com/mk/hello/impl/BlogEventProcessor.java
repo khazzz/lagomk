@@ -12,7 +12,6 @@ import com.lightbend.lagom.javadsl.persistence.cassandra.CassandraSession;
 
 import akka.Done;
 import org.pcollections.PSequence;
-import org.pcollections.TreePVector;
 
 import javax.inject.Inject;
 
@@ -76,28 +75,28 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
             setWritePreparedStatement(ps);
 
             // prepare update statement
-            session.prepare("UPDATE postcontent set title = ?, body = ?, author = ? where id = ?").thenApply(ps2 -> {
-                setUpdatePreparedStatement(ps2);
+            prepareUpdateBlog();
 
-                // prepare delete statement
-                session.prepare("DELETE FROM post_content WHERE id = ?").thenApply(ps3 -> {
-                    setDeletePreparedStatement(ps3);
-                    return Done.getInstance();
-                });
-
-                return Done.getInstance();
-            });
+            // prepare delete statement
+            prepareDeleteBlog();
 
             return Done.getInstance();
         });
     }
 
-    /*private CompletionStage<Done> prepareUpdateBlog() {
+    private CompletionStage<Done> prepareUpdateBlog() {
         return session.prepare("UPDATE postcontent set title = ?, body = ?, author = ? where id = ?").thenApply(ps -> {
             setUpdatePreparedStatement(ps);
             return Done.getInstance();
         });
-    }*/
+    }
+
+    private CompletionStage<Done> prepareDeleteBlog() {
+        return session.prepare("DELETE FROM postcontent WHERE id = ?").thenApply(ps -> {
+            setDeletePreparedStatement(ps);
+            return Done.getInstance();
+        });
+    }
 
     private CompletionStage<List<BoundStatement>> processPostAdded(BlogEvent.PostAdded event) {
         BoundStatement bindWritePreparedStatement = writePreparedStatement.bind();
