@@ -33,16 +33,6 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
         this.readSide = readSide;
     }
 
-    private void setWritePreparedStatement(PreparedStatement writePreparedStatement) {
-        this.writePreparedStatement = writePreparedStatement;
-    }
-    private void setUpdatePreparedStatement(PreparedStatement updatePreparedStatement) {
-        this.updatePreparedStatement = updatePreparedStatement;
-    }
-    private void setDeletePreparedStatement(PreparedStatement deletePreparedStatement) {
-        this.deletePreparedStatement = deletePreparedStatement;
-    }
-
     @Override
     public PSequence<AggregateEventTag<BlogEvent>> aggregateTags() {
         return BlogEventTag.TAG.allTags();
@@ -63,7 +53,7 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
         // @formatter:off
         return session.executeCreateTable(
                 "CREATE TABLE IF NOT EXISTS postcontent ("
-                        + "id text, title text, body text, author text, "
+                        + "id text, timestamp bigint, title text, body text, author text, "
                         + "PRIMARY KEY (id))");
         // @formatter:on
     }
@@ -71,8 +61,8 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
     private CompletionStage<Done> prepareWriteBlog() {
 
         // prepare insert statement
-        return session.prepare("INSERT INTO postcontent (id, title, body, author) VALUES (?, ?, ?, ?)").thenApply(ps -> {
-            setWritePreparedStatement(ps);
+        return session.prepare("INSERT INTO postcontent (id, timestamp, title, body, author) VALUES (?, ?, ?, ?, ?)").thenApply(ps -> {
+            writePreparedStatement = ps;
 
             // prepare update statement
             prepareUpdateBlog();
@@ -86,40 +76,50 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
 
     private CompletionStage<Done> prepareUpdateBlog() {
         return session.prepare("UPDATE postcontent set title = ?, body = ?, author = ? where id = ?").thenApply(ps -> {
-            setUpdatePreparedStatement(ps);
+            updatePreparedStatement = ps;
             return Done.getInstance();
         });
     }
 
     private CompletionStage<Done> prepareDeleteBlog() {
         return session.prepare("DELETE FROM postcontent WHERE id = ?").thenApply(ps -> {
-            setDeletePreparedStatement(ps);
+            deletePreparedStatement = ps;
             return Done.getInstance();
         });
     }
 
     private CompletionStage<List<BoundStatement>> processPostAdded(BlogEvent.PostAdded event) {
-        BoundStatement bindWritePreparedStatement = writePreparedStatement.bind();
-        bindWritePreparedStatement.setString("id", event.getId());
-        bindWritePreparedStatement.setString("title", event.getContent().getTitle());
-        bindWritePreparedStatement.setString("body", event.getContent().getBody());
-        bindWritePreparedStatement.setString("author", event.getContent().getAuthor());
-        return completedStatement(bindWritePreparedStatement);
+
+        return completedStatement(
+                writePreparedStatement.bind(
+                        event.getId(),
+                        event.getTimestamp().toEpochMilli(),
+                        event.getContent().getTitle(),
+                        event.getContent().getBody(),
+                        event.getContent().getAuthor()
+                )
+        );
     }
 
     private CompletionStage<List<BoundStatement>> processPostUpdated(BlogEvent.PostUpdated event) {
-        BoundStatement bindUpdatePreparedStatement = updatePreparedStatement.bind();
-        bindUpdatePreparedStatement.setString("title", event.getContent().getTitle());
-        bindUpdatePreparedStatement.setString("body", event.getContent().getBody());
-        bindUpdatePreparedStatement.setString("author", event.getContent().getAuthor());
-        bindUpdatePreparedStatement.setString("id", event.getId());
-        return completedStatement(bindUpdatePreparedStatement);
+
+        return completedStatement(
+                updatePreparedStatement.bind(
+                        event.getContent().getTitle(),
+                        event.getContent().getBody(),
+                        event.getContent().getAuthor(),
+                        event.getId()
+                )
+        );
     }
 
     private CompletionStage<List<BoundStatement>> processPostDeleted(BlogEvent.PostDeleted event) {
-        BoundStatement bindDeletedPreparedStatement = deletePreparedStatement.bind();
-        bindDeletedPreparedStatement.setString("id", event.getId());
-        return completedStatement(bindDeletedPreparedStatement);
+
+        return completedStatement(
+                deletePreparedStatement.bind(
+                        event.getId()
+                )
+        );
     }
 
 }

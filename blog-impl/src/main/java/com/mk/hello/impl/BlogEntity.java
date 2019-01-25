@@ -3,6 +3,7 @@ package com.mk.hello.impl;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntity;
 
 import java.util.Optional;
+import java.time.Instant;
 
 import akka.Done;
 
@@ -32,7 +33,7 @@ public class BlogEntity extends PersistentEntity<BlogCommand, BlogEvent, BlogSta
   private void addBehaviorForAddPost(final BehaviorBuilder b) {
     b.setCommandHandler(BlogCommand.AddPost.class,
             (cmd, ctx) -> ctx.thenPersist(
-                    new BlogEvent.PostAdded(entityId(), cmd.getContent()),
+                    new BlogEvent.PostAdded(entityId(), Instant.now(), cmd.getContent()),
                     evt -> ctx.reply(entityId())
             )
     );

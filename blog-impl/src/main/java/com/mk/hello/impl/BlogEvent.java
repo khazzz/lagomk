@@ -16,6 +16,7 @@ import javax.annotation.concurrent.Immutable;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
+import java.time.Instant;
 
 /**
  * Events related to blog post entities.
@@ -37,6 +38,8 @@ public interface BlogEvent extends Jsonable, AggregateEvent<BlogEvent> {
   final class PostAdded implements BlogEvent, CompressedJsonable {
     @NonNull
     String id;
+    @NonNull
+    Instant timestamp;
     @NonNull
     PostContent content;
   }
