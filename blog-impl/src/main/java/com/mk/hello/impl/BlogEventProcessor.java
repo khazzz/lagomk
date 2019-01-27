@@ -75,7 +75,7 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
     }
 
     private CompletionStage<Done> prepareUpdateBlog() {
-        return session.prepare("UPDATE postcontent set title = ?, body = ?, author = ? where id = ?").thenApply(ps -> {
+        return session.prepare("UPDATE postcontent set title = ?, body = ?, author = ?, timestamp = ? where id = ?").thenApply(ps -> {
             updatePreparedStatement = ps;
             return Done.getInstance();
         });
@@ -108,6 +108,7 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
                         event.getContent().getTitle(),
                         event.getContent().getBody(),
                         event.getContent().getAuthor(),
+                        event.getTimestamp().toEpochMilli(),
                         event.getId()
                 )
         );

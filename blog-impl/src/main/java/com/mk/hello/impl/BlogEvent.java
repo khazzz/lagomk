@@ -52,6 +52,8 @@ public interface BlogEvent extends Jsonable, AggregateEvent<BlogEvent> {
     @NonNull
     String id;
     @NonNull
+    Instant timestamp;
+    @NonNull
     PostContent content;
   }
 

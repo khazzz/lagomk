@@ -43,7 +43,7 @@ public class BlogEntity extends PersistentEntity<BlogCommand, BlogEvent, BlogSta
   private void addBehaviorForUpdatePost(final BehaviorBuilder b) {
     b.setCommandHandler(BlogCommand.UpdatePost.class,
             (cmd, ctx) -> ctx.thenPersist(
-                    new BlogEvent.PostUpdated(entityId(), cmd.getContent()),
+                    new BlogEvent.PostUpdated(entityId(), Instant.now(), cmd.getContent()),
                     evt -> ctx.reply(Done.getInstance())
             )
     );
