@@ -9,6 +9,7 @@ import akka.stream.testkit.javadsl.TestSink;
 import com.mk.hello.api.BlogService;
 import com.mk.hello.api.PostContent;
 import com.mk.hello.api.PostSummary;
+import com.mk.hello.api.UpdateContent;
 import org.junit.Test;
 import org.pcollections.PSequence;
 
@@ -38,7 +39,7 @@ public class BlogServiceTest {
       assertEquals("author", contentAfterAdd.get().getAuthor());
 
       // test update post
-      Done doneUpdate = service.updatePost(id1).invoke(new PostContent("title_updated", "body_updated", "author_updated")).toCompletableFuture().get(5, SECONDS);
+      Done doneUpdate = service.updatePost(id1).invoke(new UpdateContent("title_updated", "body_updated")).toCompletableFuture().get(5, SECONDS);
       assertTrue(doneUpdate.equals(Done.done()));
 
       // test get post with updated values
@@ -46,7 +47,7 @@ public class BlogServiceTest {
       assertTrue(contentAfterUpdate.isPresent());
       assertEquals("title_updated", contentAfterUpdate.get().getTitle());
       assertEquals("body_updated", contentAfterUpdate.get().getBody());
-      assertEquals("author_updated", contentAfterUpdate.get().getAuthor());
+      assertEquals("author", contentAfterUpdate.get().getAuthor());
 
       // test delete post
       Done doneDelete = service.deletePost(id1).invoke().toCompletableFuture().get(5, SECONDS);
@@ -58,17 +59,17 @@ public class BlogServiceTest {
       assertEquals(contentAfterDelete, Optional.empty());
 
       // test add post(s)
-      PostContent[] postContents = new PostContent[15];
-      PostSummary[] postSummaries = new PostSummary[15];
-      for(int i=0; i<15; i++) {
-        postContents[i] = new PostContent("title"+i, "body"+i, "author"+i);
+      PostContent[] postContents = new PostContent[10];
+      PostSummary[] postSummaries = new PostSummary[10];
+      for(int i=0; i<10; i++) {
+        postContents[i] = new PostContent("title"+i, "body"+i, "author");
         String id = service.addPost().invoke(postContents[i]).toCompletableFuture().get(5, SECONDS);
         assertFalse(id.isEmpty());
 
         postSummaries[i] = new PostSummary(id, postContents[i].getTitle());
       }
 
-      Source<PostSummary, ?> livePosts = service.getLivePosts().invoke().toCompletableFuture().get(5, SECONDS);
+      Source<PostSummary, ?> livePosts = service.getLivePostsByAuthor().invoke("author").toCompletableFuture().get(5, SECONDS);
       Probe<PostSummary> probe = livePosts.runWith(TestSink.probe(server.system()),
               server.materializer());
       probe.request(10);

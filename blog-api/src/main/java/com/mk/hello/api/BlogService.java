@@ -40,12 +40,12 @@ public interface BlogService extends Service {
   /**
    * Submits a blog post for the given ID. Example:
    * curl -H 'content-type: application/json' -X PUT
-   * -d '{"title": "Some Title", "body": "Some body", "author": "Some Guy"}'
+   * -d '{"title": "Some Title", "body": "Some body"}'
    * http://localhost:9000/api/blog/12345678-1234-1234-1234-1234567890ab
    *
    * @param id id of blog post to updatePost
    */
-  ServiceCall<PostContent, Done> updatePost(String id);
+  ServiceCall<UpdateContent, Done> updatePost(String id);
 
   /**
    * Delete a blog post for the given ID. Example:

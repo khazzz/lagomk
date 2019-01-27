@@ -50,8 +50,6 @@ public interface BlogEvent extends Jsonable, AggregateEvent<BlogEvent> {
   @AllArgsConstructor(onConstructor = @__(@JsonCreator))
   final class PostUpdated implements BlogEvent, CompressedJsonable {
     @NonNull
-    String id;
-    @NonNull
     Instant timestamp;
     @NonNull
     PostContent content;
@@ -63,6 +61,8 @@ public interface BlogEvent extends Jsonable, AggregateEvent<BlogEvent> {
   @AllArgsConstructor(onConstructor = @__(@JsonCreator))
   final class PostDeleted implements BlogEvent, CompressedJsonable {
     @NonNull
-    String id;
+    String author;
+    @NonNull
+    Instant timestamp;
   }
 }

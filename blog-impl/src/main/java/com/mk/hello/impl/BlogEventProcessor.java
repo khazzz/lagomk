@@ -54,14 +54,14 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
         return session.executeCreateTable(
                 "CREATE TABLE IF NOT EXISTS postcontent ("
                         + "id text, timestamp bigint, title text, body text, author text, "
-                        + "PRIMARY KEY (id))");
+                        + "PRIMARY KEY (author, timestamp))");
         // @formatter:on
     }
 
     private CompletionStage<Done> prepareWriteBlog() {
 
         // prepare insert statement
-        return session.prepare("INSERT INTO postcontent (id, timestamp, title, body, author) VALUES (?, ?, ?, ?, ?)").thenApply(ps -> {
+        return session.prepare("INSERT INTO postcontent (author, timestamp, title, body, id) VALUES (?, ?, ?, ?, ?)").thenApply(ps -> {
             writePreparedStatement = ps;
 
             // prepare update statement
@@ -75,14 +75,14 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
     }
 
     private CompletionStage<Done> prepareUpdateBlog() {
-        return session.prepare("UPDATE postcontent set title = ?, body = ?, author = ?, timestamp = ? where id = ?").thenApply(ps -> {
+        return session.prepare("UPDATE postcontent set title = ?, body = ? where author = ? and timestamp = ?").thenApply(ps -> {
             updatePreparedStatement = ps;
             return Done.getInstance();
         });
     }
 
     private CompletionStage<Done> prepareDeleteBlog() {
-        return session.prepare("DELETE FROM postcontent WHERE id = ?").thenApply(ps -> {
+        return session.prepare("DELETE FROM postcontent WHERE author = ? and timestamp = ?").thenApply(ps -> {
             deletePreparedStatement = ps;
             return Done.getInstance();
         });
@@ -92,11 +92,11 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
 
         return completedStatement(
                 writePreparedStatement.bind(
-                        event.getId(),
+                        event.getContent().getAuthor(),
                         event.getTimestamp().toEpochMilli(),
                         event.getContent().getTitle(),
                         event.getContent().getBody(),
-                        event.getContent().getAuthor()
+                        event.getId()
                 )
         );
     }
@@ -108,8 +108,7 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
                         event.getContent().getTitle(),
                         event.getContent().getBody(),
                         event.getContent().getAuthor(),
-                        event.getTimestamp().toEpochMilli(),
-                        event.getId()
+                        event.getTimestamp().toEpochMilli()
                 )
         );
     }
@@ -118,7 +117,8 @@ public class BlogEventProcessor extends ReadSideProcessor<BlogEvent> {
 
         return completedStatement(
                 deletePreparedStatement.bind(
-                        event.getId()
+                        event.getAuthor(),
+                        event.getTimestamp().toEpochMilli()
                 )
         );
     }

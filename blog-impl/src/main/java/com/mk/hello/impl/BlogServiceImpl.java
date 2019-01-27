@@ -7,6 +7,7 @@ import com.lightbend.lagom.javadsl.persistence.PersistentEntityRegistry;
 import com.lightbend.lagom.javadsl.persistence.ReadSide;
 import com.mk.hello.api.BlogService;
 import com.mk.hello.api.PostContent;
+import com.mk.hello.api.UpdateContent;
 import com.mk.hello.api.PostSummary;
 import com.lightbend.lagom.javadsl.persistence.cassandra.CassandraSession;
 import com.datastax.driver.core.Row;
@@ -22,6 +23,7 @@ import javax.inject.Inject;
 
 import akka.Done;
 import akka.NotUsed;
+import com.mk.hello.api.UpdateContent;
 import org.pcollections.PSequence;
 import org.pcollections.TreePVector;
 
@@ -59,7 +61,7 @@ public class BlogServiceImpl implements BlogService {
   }
 
   @Override
-  public ServiceCall<PostContent, Done> updatePost(final String id) {
+  public ServiceCall<UpdateContent, Done> updatePost(final String id) {
     return content -> registry.refFor(BlogEntity.class, id)
             .ask(new BlogCommand.UpdatePost(content));
   }
@@ -98,10 +100,9 @@ public class BlogServiceImpl implements BlogService {
   @Override
   public ServiceCall<NotUsed, PSequence<PostSummary>> getPostsByAuthor(final String author, Integer pageNo, Integer pageSize) {
     return req -> {
-      CompletionStage<PSequence<PostSummary>> result = db.selectAll("SELECT * FROM postcontent")
+      CompletionStage<PSequence<PostSummary>> result = db.selectAll("SELECT * FROM postcontent where author = ? ORDER BY timestamp DESC", author)
               .thenApply(rows -> {
                 List<PostSummary> posts = rows.stream()
-                        .filter(row -> row.getString("author").equalsIgnoreCase(author))
                         .skip(pageNo*pageSize)
                         .limit(pageSize)
                         .map(this::mapPostSummary).collect(Collectors.toList());
@@ -116,8 +117,7 @@ public class BlogServiceImpl implements BlogService {
 
     return author -> {
 
-      Source<PostSummary, ?> result = db.select("SELECT * FROM postcontent")
-              .filter(row -> row.getString("author").equalsIgnoreCase(author))
+      Source<PostSummary, ?> result = db.select("SELECT * FROM postcontent where author = ? ORDER BY timestamp DESC", author)
               .map(this::mapPostSummary);
       return CompletableFuture.completedFuture(result);
     };

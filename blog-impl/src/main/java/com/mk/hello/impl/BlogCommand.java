@@ -7,12 +7,14 @@ import com.lightbend.lagom.serialization.CompressedJsonable;
 import com.lightbend.lagom.serialization.Jsonable;
 import com.mk.hello.api.BlogService;
 import com.mk.hello.api.PostContent;
+import com.mk.hello.api.UpdateContent;
 
 import java.util.Optional;
 
 import javax.annotation.concurrent.Immutable;
 
 import akka.Done;
+import com.mk.hello.api.UpdateContent;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -53,7 +55,7 @@ public interface BlogCommand extends Jsonable {
   @AllArgsConstructor(onConstructor = @__(@JsonCreator))
   final class UpdatePost implements BlogCommand, CompressedJsonable, PersistentEntity.ReplyType<Done> {
     @NonNull
-    PostContent content;
+    UpdateContent content;
   }
 
   /**
